@@ -3,9 +3,18 @@
 import { useChat } from '@ai-sdk/react';
 
 export default function Home() {
-  // Bypasses the strict frontend hook destruction type validation for this SDK version
+  // Pass an explicit configuration object to target your backend endpoint directly
   // @ts-ignore
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+    api: '/api/chat',
+  });
+
+  // Intercept the form submission to prevent default full-page reload and force the stream
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    handleSubmit(e);
+  };
 
   return (
     <main className="flex flex-col items-center min-h-screen bg-slate-50 p-6">
@@ -26,7 +35,6 @@ export default function Home() {
             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-lg px-4 py-2 ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800'}`}>
                 <p className="text-sm font-semibold mb-1">{m.role === 'user' ? 'You' : 'AI Consultant Agent'}</p>
-                {/* Fallback to text or content smoothly bypasses version differences */}
                 <p className="whitespace-pre-wrap">{m.text || m.content || ''}</p>
               </div>
             </div>
@@ -34,7 +42,7 @@ export default function Home() {
         </div>
 
         {/* Form Input */}
-        <form onSubmit={handleSubmit} className="p-4 border-t border-slate-200 flex gap-2">
+        <form onSubmit={onFormSubmit} className="p-4 border-t border-slate-200 flex gap-2">
           <input
             className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
             value={input}
@@ -42,7 +50,7 @@ export default function Home() {
             onChange={handleInputChange}
           />
           <button type="submit" disabled={isLoading} className="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
-            Analyze
+            {isLoading ? 'Analyzing...' : 'Analyze'}
           </button>
         </form>
       </div>
